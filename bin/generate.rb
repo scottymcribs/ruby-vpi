@@ -123,11 +123,11 @@ end
 
 
 # obtain templates for output generation
-  DESIGN_TEMPLATE = Template.new('design.rb')
-  PROTO_TEMPLATE  = Template.new('proto.rb')
-  SPEC_TEMPLATE   = Template.new('spec.rb')
-  RUNNER_TEMPLATE = Template.new('runner.rake')
-  LOADER_TEMPLATE = Template.new('loader.rb')
+  #DESIGN_TEMPLATE = Template.new('design.rb')
+  #PROTO_TEMPLATE  = Template.new('proto.rb')
+  SPEC_TEMPLATE   = Template.new('chkpt_spec.rb')
+  RUNNER_TEMPLATE = Template.new('chkpt_runner.rake')
+  LOADER_TEMPLATE = Template.new('chkpt_loader.rb')
 
 
 # parse command-line options
@@ -165,18 +165,32 @@ end
   opts.parse! ARGV
 
 
-v = VerilogParser.new(ARGF.read)
-v.modules.each do |m|
-  puts
-  notify :module, m.name
 
-  o = OutputInfo.new(m.name, optSpecFmt)
-  aParseInfo, aModuleInfo, aOutputInfo = v.freeze, m.freeze, o.freeze
+ARGV.each do |fileName|
+  v = VerilogParser.new(File.new(fileName, "r").read)
+  v.modules.each do |m|
+    puts
+    notify :module, m.name
 
-  write_file o.runnerPath, RUNNER_TEMPLATE.result(binding)
-  write_file o.designPath, DESIGN_TEMPLATE.result(binding)
-  write_file o.protoPath, PROTO_TEMPLATE.result(binding)
-  write_file o.specPath, SPEC_TEMPLATE.result(binding)
-  write_file o.loaderPath, LOADER_TEMPLATE.result(binding)
-  write_file 'Rakefile', "require 'ruby-vpi/runner_proxy'"
+    # Overrided since I continually forget to include the flag
+    optSpecFmt = :xUnit
+    o = OutputInfo.new(m.name, optSpecFmt)
+    aParseInfo, aModuleInfo, aOutputInfo = v.freeze, m.freeze, o.freeze
+
+    write_file o.runnerPath, RUNNER_TEMPLATE.result(binding)
+    #write_file o.designPath, DESIGN_TEMPLATE.result(binding)
+    #write_file o.protoPath, PROTO_TEMPLATE.result(binding)
+    write_file o.specPath, SPEC_TEMPLATE.result(binding)
+    write_file o.loaderPath, LOADER_TEMPLATE.result(binding)
+
+    rakefile_text =<<END
+if ARGV.size > 1
+  require 'ruby-vpi/chkpt_runner_proxy'
+else
+  require 'ruby-vpi/runner_proxy'
+end
+END
+
+    write_file 'Rakefile', rakefile_text
+  end
 end

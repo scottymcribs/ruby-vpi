@@ -54,14 +54,12 @@ if tool = ARGV.shift
   else
     glob = File.join(TOOL_DIR, tool + '*' + TOOL_EXT)
     file = Dir[glob].first
-
-    begin
-      load file
-    rescue
+    
+    if !File.exist?(file)
       raise ArgumentError, "The #{tool.inspect} tool does not exist."
-    end
+    end 
+    load file
   end
-
 else
   show_help_info
 end

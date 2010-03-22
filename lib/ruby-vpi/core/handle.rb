@@ -242,6 +242,14 @@ module VPI
       handles
     end
 
+    def to_arr
+      handles = []
+      (self.size).times { |i|
+        handles << vpi_handle_by_index(self,i)
+      }
+      handles
+    end
+
     # inherit Enumerable methods, such as #each, #map, #select, etc.
       list = Enumerable.instance_methods
 
